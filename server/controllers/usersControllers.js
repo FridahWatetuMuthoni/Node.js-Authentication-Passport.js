@@ -1,7 +1,6 @@
 const User = require('../models/Users')
 const { registrationSchema, loginSchema } = require("../validation_schemas/users")
 const bcrypt = require('bcrypt')
-const passport = require('passport')
 
 
 const registerController = async (req, res) => {
@@ -24,13 +23,13 @@ const registerController = async (req, res) => {
             //encrypt password
             const hashed_password = await bcrypt.hash(password, 10)
             //create new user
-            const user = await User.create({ username, email, telephone, password:hashed_password } )
+            const user = await User.create({ username, email, telephone, password: hashed_password })
+            res.redirect('/')
             res.status(201).json(user)
-            res.redirect('/api/users/login')
         }
         catch (err) {
-            res.status(400).json({ err: err })
             res.redirect('/api/users/register')
+            res.status(400).json({ err: err })
         }
     }
 
@@ -38,21 +37,23 @@ const registerController = async (req, res) => {
 
 
 
-const loginController = (req, res) => {
+/*const loginController = (req, res) => {
     //Data validation
-    const { error } = loginSchema(req.body)
+    const { error } = loginSchema(req?.body)
     const error_message = error?.details[0].message
     if (error) return res.status(400).json({ "message": error_message })
-    //use passport to authenticate
-    passport.authenticate('local',{
-        successRedirect: '/',
-        failureRedirect:'/api/users/login'
-    })
-    
-} 
+    const userCredentials = {
+        username: req?.body.username,
+        password:req?.body.password
+    }
+    return userCredentials;
+    } */
 
-const logoutController = (req, res) => {
-    res.send('Logout Controller')
+const logoutController = (req, res, next) => {
+    req.logout((err) => {
+        if (err) return next(err)
+        res.redirect('/done')
+    })
 }
 
-module.exports = {loginController,logoutController,registerController}
+module.exports = {logoutController,registerController}

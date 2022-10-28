@@ -7,7 +7,6 @@ const userRouter = require('./routes/users')
 const session = require('express-session')
 const mongoose = require('mongoose')
 const passport = require('passport')
-const User = require('./models/Users')
 const authenticateUser = require('./passport/passport')
 
 
@@ -24,7 +23,7 @@ app.use(express.urlencoded({ extended: false }))
 app.use(session({
     secret: process.env.secret,
     resave: false,
-    saveUninitialized:true
+    saveUninitialized:false
 }))
 //custom middleware
 
@@ -38,10 +37,24 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 //Routes
-app.use('/api/users', userRouter)
+//home route also the success route
 app.get('/', (req, res) => {
-    res.send('Home Page')
+   res.json({user:req.user})
 })
+app.get('/failure', (req, res) => {
+    res.send("Failure page")
+})
+app.get('/done', (req, res) => {
+    res.send("logout successfull")
+})
+
+app.use('/api/users', userRouter)
+
+//login route
+app.post('/api/users/login',passport.authenticate('local',{
+    successRedirect: '/',
+    failureRedirect: '/failure'
+}))
 
 
 //only listen to requests when the database is connected

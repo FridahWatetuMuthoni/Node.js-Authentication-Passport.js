@@ -1,15 +1,14 @@
 const local_strategy = require('passport-local').Strategy
 const User = require('../models/Users')
 const bcrypt = require('bcrypt')
+
 //https://www.golinuxcloud.com/nodejs-passportjs-authenticate/
 
 const passport_callback = async (username, password, done) => {
     try {
         const user = await User.findOne({ username })
         if (!user) return done(null, false, { message: "User does not exists" })
-        //check the password
-        const hashed_password = await bcrypt.hash(password,10)
-        const valid = await bcrypt.compare(hashed_password, user.password)
+        const valid = await bcrypt.compare(password, user.password)
         if (valid) { 
             return done(null,user)
         }
@@ -23,16 +22,17 @@ const passport_callback = async (username, password, done) => {
 }
 
 const authenticateUser = (passport) => {
-    passport.use(new local_strategy(customFields, passport_callback))
+    passport.use(new local_strategy({usernameField:'username'}, passport_callback))
     
     passport.serializeUser((user, done) => {
         console.log(user)
+        console.log(user.id)
         done(null, user.id)
     })
 
     passport.deserializeUser(async (id, done) => {
         try { 
-            const user = User.findById(id)
+            const user = await User.findById(id)
             return done(null,user)
         }
         catch (err) {
